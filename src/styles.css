@@ -250,6 +250,17 @@ button {
   color: var(--active-ink);
 }
 
+/* The plain hover rule carries :not(:disabled), which outscores .btn.on and
+   used to swap the active fill out from under the button while its icon kept
+   --active-ink. That left a near black icon on a near black panel in dark, and
+   white on white in light. Hold the active fill and dim it instead. */
+.btn.on:hover:not(:disabled) {
+  background: var(--active);
+  border-color: var(--active);
+  color: var(--active-ink);
+  opacity: 0.85;
+}
+
 .btn.icon {
   width: 32px;
   padding: 0;
@@ -293,6 +304,12 @@ button {
 .seg button.on {
   background: var(--active);
   color: var(--active-ink);
+}
+
+.seg button.on:hover {
+  background: var(--active);
+  color: var(--active-ink);
+  opacity: 0.85;
 }
 
 .seg .seg-label {
@@ -749,6 +766,12 @@ button {
   color: var(--ink);
 }
 
+.segrow-opts button.on:hover {
+  background: var(--panel);
+  color: var(--ink);
+  opacity: 0.85;
+}
+
 /* ---------- xyz fields ---------- */
 
 .xyz {
@@ -1086,6 +1109,19 @@ button {
 .view-lock.on {
   opacity: 1;
   background: var(--hover);
+}
+
+/* On a pinned row the background is inverted, so --hover is the wrong tint to
+   paint over it. Hold the row's own ink and dim on hover instead. */
+.view-row.on .view-lock {
+  color: var(--active-ink);
+  background: transparent;
+  opacity: 1;
+}
+
+.view-row.on .view-lock:hover {
+  background: transparent;
+  opacity: 0.7;
 }
 
 .hint-note {
