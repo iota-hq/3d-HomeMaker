@@ -133,8 +133,12 @@ export function Room({ obj }: { obj: SceneObject }) {
 
   return (
     <group>
+      {/* The floor sits ON the ground rather than flush into it. Spanning
+          -3in to 0 put its top face exactly on the ground plane, which is a
+          coplanar pair and z-fights from above. A real floor slab is proud of
+          grade anyway. */}
       {hasFloor && (
-        <mesh position={[0, -1.5 * IN, 0]} receiveShadow>
+        <mesh position={[0, 1.5 * IN, 0]} receiveShadow>
           <boxGeometry args={[width + t, 3 * IN, depth + t]} />
           <Mat finish="tile" scale={Math.max(width, depth)} />
         </mesh>

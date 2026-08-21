@@ -392,7 +392,8 @@ export const useSceneStore = create<SceneState>((set, get) => ({
     push('window', width / 2, 0, Math.PI / 2, { width: winW, height: winH, sill: winSill }, 'Right window')
 
     if (bool(p, 'floor', true)) {
-      push('slab', 0, 0, 0, { width: width + t, depth: depth + t, thickness: 3 * 0.0254, finish: 'concrete' }, 'Floor')
+      // Slab draws upward from its origin, so this matches the room's own floor
+      push('slab', 0, 0, 0, { width: width + t, depth: depth + t, thickness: 3 * 0.0254, finish: 'tile' }, 'Floor')
     }
     if (bool(p, 'ceiling', false)) {
       const ceiling = { ...makeObject('slab', place(0, 0), 'Ceiling'), groupId: gid }
