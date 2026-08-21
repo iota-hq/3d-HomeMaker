@@ -20,6 +20,17 @@ const FINISH_KEYS = new Set(['finish', 'surface', 'paver', 'sheets'])
  * every frame of a drag, which cost ~40ms per update.
  * ------------------------------------------------------------------ */
 
+/**
+ * Which way each axis actually points. Worth spelling out: this uses the
+ * three.js convention where Y is up, while CAD tools like AutoCAD and Blender
+ * put Z up, so the two read as swapped if you come from that side.
+ */
+const AXIS_HINT = {
+  X: 'left and right',
+  Y: 'up and down',
+  Z: 'forward and back',
+} as const
+
 function AxisField({
   axis,
   value,
@@ -81,7 +92,11 @@ function AxisField({
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
-      title={disabled ? 'This component sits on the ground' : `Drag to move along ${axis}, click to type`}
+      title={
+        disabled
+          ? `${axis} is ${AXIS_HINT[axis]}. This component sits on the ground, so it is fixed.`
+          : `${axis} is ${AXIS_HINT[axis]}. Drag to move, click to type.`
+      }
     >
       <span>{axis}</span>
       <input
@@ -390,6 +405,7 @@ function InspectorBody({ id }: { id: string }) {
           <Icon icon={I.position} size={13} /> Position
         </p>
         <Placement id={id} grounded={def.grounded} />
+        <p className="hint-note">X is left and right, Y is up, Z is forward and back.</p>
       </div>
 
       <div className="section">
