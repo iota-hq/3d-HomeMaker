@@ -21,6 +21,9 @@ npm run preview  # serve the build
 
 Append `?reset` to the URL to start from an empty plot.
 
+Desktop only. On a phone the app shows a short notice instead, and never mounts
+the 3D canvas.
+
 There is no backend and no account. Plans autosave to `localStorage`, fonts are
 self hosted, and textures are generated in the browser, so the app makes no
 network requests once it has loaded.

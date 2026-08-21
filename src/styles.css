@@ -1063,6 +1063,55 @@ button {
   font-size: inherit;
 }
 
+/* ---------- small screen gate ---------- */
+
+.gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 32px 26px;
+  text-align: center;
+  background: var(--bg);
+}
+
+.gate-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 74px;
+  height: 74px;
+  margin-bottom: 20px;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.gate h1 {
+  margin: 0;
+  font-family: var(--heading);
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.gate-lead {
+  margin: 8px 0 0;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.gate-body {
+  margin: 12px 0 26px;
+  max-width: 42ch;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ink-2);
+}
+
 /* ---------- about ---------- */
 
 .modal.about {

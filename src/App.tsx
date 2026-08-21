@@ -12,9 +12,11 @@ import { Icon, I } from './ui/icons'
 import { Inspector } from './ui/Inspector'
 import { About } from './ui/About'
 import { Confirm } from './ui/Confirm'
+import { MobileNotice } from './ui/MobileNotice'
 import { ScenePicker } from './ui/ScenePicker'
 import { ViewPanel } from './ui/ViewPanel'
 import { useAutoHideScroll } from './ui/useAutoHideScroll'
+import { useIsSmallScreen } from './ui/useIsSmallScreen'
 
 /** Own subscription, so a drag re-renders this line and nothing else. */
 function Readout() {
@@ -66,6 +68,13 @@ const SNAPS = [
 ]
 
 export default function App() {
+  const smallScreen = useIsSmallScreen()
+  // bail before the planner, and before the 3D canvas, is ever mounted
+  if (smallScreen) return <MobileNotice />
+  return <Planner />
+}
+
+function Planner() {
   const units = useSceneStore((s) => s.units)
   const setUnits = useSceneStore((s) => s.setUnits)
   const gridSnap = useSceneStore((s) => s.gridSnap)
