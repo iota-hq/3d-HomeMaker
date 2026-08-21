@@ -73,6 +73,9 @@ Castle Red and Coffee Brown.
 handrail up the helix, and every tread is the same box, equal width and equal
 going, rather than a wedge that widens towards the outside.
 
+**Railings** come as turned spindles, wrought iron scrollwork, glass panels or
+plain bars, straight or bent around a curve.
+
 **Paths** can be bent around an arc with the Curve control.
 
 **Rooms** can be split into their separate walls, door, windows and floor with

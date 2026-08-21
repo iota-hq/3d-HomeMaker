@@ -92,11 +92,7 @@ function AxisField({
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
-      title={
-        disabled
-          ? `${axis} is ${AXIS_HINT[axis]}. This component sits on the ground, so it is fixed.`
-          : `${axis} is ${AXIS_HINT[axis]}. Drag to move, click to type.`
-      }
+      title={`${axis} is ${AXIS_HINT[axis]}. Drag to move, click to type.`}
     >
       <span>{axis}</span>
       <input
@@ -120,7 +116,7 @@ function AxisField({
   )
 }
 
-function Placement({ id, grounded }: { id: string; grounded: boolean }) {
+function Placement({ id }: { id: string }) {
   const units = useSceneStore((s) => s.units)
   const setPosition = useSceneStore((s) => s.setPosition)
   const setRotationY = useSceneStore((s) => s.setRotationY)
@@ -145,7 +141,7 @@ function Placement({ id, grounded }: { id: string; grounded: boolean }) {
     <>
       <div className="xyz">
         <AxisField axis="X" value={px} units={units} disabled={false} onChange={setAxis(0)} onCommit={pushHistory} />
-        <AxisField axis="Y" value={py} units={units} disabled={grounded} onChange={setAxis(1)} onCommit={pushHistory} />
+        <AxisField axis="Y" value={py} units={units} disabled={false} onChange={setAxis(1)} onCommit={pushHistory} />
         <AxisField axis="Z" value={pz} units={units} disabled={false} onChange={setAxis(2)} onCommit={pushHistory} />
       </div>
       <SliderRow
@@ -404,7 +400,7 @@ function InspectorBody({ id }: { id: string }) {
         <p className="section-title">
           <Icon icon={I.position} size={13} /> Position
         </p>
-        <Placement id={id} grounded={def.grounded} />
+        <Placement id={id} />
         <p className="hint-note">X is left and right, Y is up, Z is forward and back.</p>
       </div>
 
