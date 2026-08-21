@@ -12,6 +12,7 @@ import { Khaprail } from './components/Khaprail'
 import { Ladder } from './components/Ladder'
 import { Mirror } from './components/Mirror'
 import { Path } from './components/Path'
+import { Railing } from './components/Railing'
 import { Room } from './components/Room'
 import { Slab } from './components/Slab'
 import { Table } from './components/Table'
@@ -65,6 +66,8 @@ function Body({ obj }: { obj: SceneObject }) {
       return <Bed obj={obj} />
     case 'mirror':
       return <Mirror obj={obj} />
+    case 'railing':
+      return <Railing obj={obj} />
     default:
       return null
   }

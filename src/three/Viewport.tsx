@@ -2,7 +2,7 @@ import { CameraControls } from '@react-three/drei'
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
-import type { SceneObject } from '../core/types'
+import { num, type SceneObject } from '../core/types'
 import { snap as snapTo } from '../core/units'
 import { useSceneStore } from '../store/useSceneStore'
 import { bindCamera, feedGizmo, unbindCamera } from './camera'
@@ -11,20 +11,44 @@ import { hostWallFor } from './openings'
 
 /* ------------------------------------------------------------------ */
 
+/**
+ * Sun, sky and fill.
+ *
+ * The shadow camera is sized to whatever the scene actually covers. A fixed
+ * frustum either wasted most of its texels on empty space, which coarsens the
+ * shadow until it bands, or cropped the shadow off entirely once a second plot
+ * was added further out.
+ */
 function Lighting() {
+  const extent = useSceneStore((s) => {
+    let r = 14
+    for (const o of s.objects) {
+      const half =
+        o.type === 'ground'
+          ? Math.max(num(o.params, 'width', 24), num(o.params, 'depth', 24)) / 2
+          : 4
+      r = Math.max(r, Math.abs(o.position[0]) + half, Math.abs(o.position[2]) + half)
+    }
+    // quantise so a drag does not rebuild the shadow camera every frame
+    return Math.ceil(Math.min(r, 200) / 10) * 10
+  })
+
+  const d = extent * 1.15
+  const far = d * 4 + 60
+
   return (
     <>
       <hemisphereLight args={['#ffffff', '#b7b2a6', 1.05]} />
       <ambientLight intensity={0.35} />
       <directionalLight
-        position={[26, 40, 18]}
+        position={[d * 0.55, d * 1.1, d * 0.4]}
         intensity={1.55}
         castShadow
         shadow-mapSize={[2048, 2048]}
-        shadow-bias={-0.0004}
-        shadow-normalBias={0.02}
+        shadow-bias={-0.0006}
+        shadow-normalBias={0.05}
       >
-        <orthographicCamera attach="shadow-camera" args={[-45, 45, 45, -45, 0.5, 150]} />
+        <orthographicCamera attach="shadow-camera" args={[-d, d, d, -d, 1, far]} />
       </directionalLight>
       <directionalLight position={[-20, 18, -14]} intensity={0.28} />
     </>
@@ -310,7 +334,9 @@ export function Viewport() {
         // so keep the last frame instead of letting the compositor drop it
         preserveDrawingBuffer: true,
       }}
-      camera={{ fov: 45, near: 0.1, far: 800, position: [22, 16, 26] }}
+      // a tight near plane is what buys depth precision; 0.1 to 800 was a
+      // ratio of 8000 to 1 and the ground z-fought with itself at distance
+      camera={{ fov: 45, near: 0.5, far: 400, position: [22, 16, 26] }}
       onCreated={({ gl }) => {
         gl.shadowMap.type = THREE.PCFShadowMap
       }}

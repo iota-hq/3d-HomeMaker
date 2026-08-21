@@ -1,7 +1,7 @@
 export type ComponentType =
   | 'ground' | 'wall' | 'door' | 'window' | 'slab' | 'column'
   | 'path' | 'khaprail' | 'bluescope' | 'stairs' | 'ladder'
-  | 'room' | 'cupboard' | 'table' | 'bed' | 'mirror'
+  | 'room' | 'cupboard' | 'table' | 'bed' | 'mirror' | 'railing'
 
 export type Category = 'Site' | 'Structure' | 'Openings' | 'Roof' | 'Access' | 'Furniture'
 

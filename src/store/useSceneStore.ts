@@ -1,6 +1,15 @@
 import { create } from 'zustand'
 import { CATALOG, defaultParams } from '../core/catalog'
-import { num, type ComponentType, type Params, type ParamValue, type SceneDoc, type SceneObject } from '../core/types'
+import {
+  bool,
+  num,
+  str,
+  type ComponentType,
+  type Params,
+  type ParamValue,
+  type SceneDoc,
+  type SceneObject,
+} from '../core/types'
 import { FT, type UnitSystem } from '../core/units'
 
 const STORAGE_KEY = '3dspace.scene.v1'
@@ -12,11 +21,44 @@ export type Theme = 'light' | 'dark'
 let seq = 0
 const newId = () => `o${Date.now().toString(36)}${(seq++).toString(36)}`
 
-function makeObject(type: ComponentType, position: [number, number, number]): SceneObject {
+/**
+ * Wall, then Wall 2, Wall 3. Picks the next free number rather than counting,
+ * so deleting Wall 2 and adding another does not produce a duplicate name.
+ */
+function nextName(type: ComponentType, objects: SceneObject[]): string {
+  const label = CATALOG[type].label
+  const taken = objects.filter((o) => o.type === type)
+  if (!taken.length) return label
+
+  // No regex here on purpose: labels contain spaces and slashes, and escaping
+  // them into a pattern is a trap for no benefit.
+  const prefix = `${label} `
+  const used = new Set<number>()
+  for (const o of taken) {
+    if (o.name === label) {
+      used.add(1)
+      continue
+    }
+    if (o.name.startsWith(prefix)) {
+      const n = Number(o.name.slice(prefix.length))
+      if (Number.isInteger(n) && n > 0) used.add(n)
+    }
+  }
+
+  let n = 1
+  while (used.has(n)) n++
+  return n === 1 ? label : `${label} ${n}`
+}
+
+function makeObject(
+  type: ComponentType,
+  position: [number, number, number],
+  name = CATALOG[type].label,
+): SceneObject {
   return {
     id: newId(),
     type,
-    name: CATALOG[type].label,
+    name,
     position,
     rotationY: 0,
     params: defaultParams(type),
@@ -38,22 +80,48 @@ const PLOT_GAP = 2 * FT
  * plot is laid out beside the rightmost existing one, clear of it.
  */
 function autoPlace(type: ComponentType, objects: SceneObject[]): [number, number, number] {
-  if (type !== 'ground') return [0, 0, 0]
-
   const grounds = objects.filter((o) => o.type === 'ground')
+
+  if (type === 'ground') {
+    if (!grounds.length) return [0, 0, 0]
+    const width = num(defaultParams('ground'), 'width')
+    let rightEdge = -Infinity
+    let z = 0
+    for (const g of grounds) {
+      const edge = g.position[0] + num(g.params, 'width') / 2
+      if (edge > rightEdge) {
+        rightEdge = edge
+        z = g.position[2]
+      }
+    }
+    return [rightEdge + PLOT_GAP + width / 2, 0, z]
+  }
+
   if (!grounds.length) return [0, 0, 0]
 
-  const width = num(defaultParams('ground'), 'width')
+  // Everything else lands in a staging row just off the near edge of the plot,
+  // at ground level. Dropping it in the middle buried it inside whatever was
+  // already built there.
   let rightEdge = -Infinity
-  let z = 0
+  let frontEdge = -Infinity
+  let leftEdge = Infinity
   for (const g of grounds) {
-    const edge = g.position[0] + num(g.params, 'width') / 2
-    if (edge > rightEdge) {
-      rightEdge = edge
-      z = g.position[2]
-    }
+    rightEdge = Math.max(rightEdge, g.position[0] + num(g.params, 'width') / 2)
+    leftEdge = Math.min(leftEdge, g.position[0] - num(g.params, 'width') / 2)
+    frontEdge = Math.max(frontEdge, g.position[2] + num(g.params, 'depth') / 2)
   }
-  return [rightEdge + PLOT_GAP + width / 2, 0, z]
+
+  const staged = objects.filter((o) => o.type !== 'ground' && o.position[2] > frontEdge)
+  const step = 10 * FT
+  const span = Math.max(rightEdge - leftEdge, step)
+  const slot = staged.length
+  const perRow = Math.max(1, Math.floor(span / step))
+
+  return [
+    leftEdge + step / 2 + (slot % perRow) * step,
+    0,
+    frontEdge + PLOT_GAP + step / 2 + Math.floor(slot / perRow) * step,
+  ]
 }
 
 interface SceneState {
@@ -97,6 +165,8 @@ interface SceneState {
 
   groupSelected: () => void
   ungroupSelected: () => void
+  /** Replaces a room with its separate walls, door and windows, grouped. */
+  explodeRoom: (id: string) => void
   /** Every object that moves when this one moves: itself, plus its group. */
   linkedIds: (id: string) => string[]
 
@@ -155,7 +225,11 @@ export const useSceneStore = create<SceneState>((set, get) => ({
   add: (type, position) => {
     const state = get()
     if (CATALOG[type].singleton && state.objects.some((o) => o.type === type)) return null
-    const obj = makeObject(type, position ?? autoPlace(type, state.objects))
+    const obj = makeObject(
+      type,
+      position ?? autoPlace(type, state.objects),
+      nextName(type, state.objects),
+    )
     if (CATALOG[type].grounded) obj.position[1] = 0
     state.pushHistory()
     set((s) => ({ objects: [...s.objects, obj], selectedIds: [obj.id] }))
@@ -192,7 +266,7 @@ export const useSceneStore = create<SceneState>((set, get) => ({
     const copy: SceneObject = {
       ...src,
       id: newId(),
-      name: `${src.name} copy`,
+      name: nextName(src.type, get().objects),
       params: { ...src.params },
       groupId: undefined,
       position: [src.position[0] + 3 * FT, src.position[1], src.position[2] + 3 * FT],
@@ -257,6 +331,81 @@ export const useSceneStore = create<SceneState>((set, get) => ({
     get().pushHistory()
     set((s) => ({
       objects: patch(s.objects, id, (o) => ({ ...o, lowPoly: lowPoly ?? undefined })),
+    }))
+  },
+
+  explodeRoom: (id) => {
+    const s = get()
+    const room = s.objects.find((o) => o.id === id)
+    if (!room || room.type !== 'room') return
+
+    const p = room.params
+    const square = str(p, 'shape', 'rect') === 'square'
+    const width = num(p, 'width')
+    const depth = square ? width : num(p, 'depth')
+    const height = num(p, 'height')
+    const t = num(p, 'thickness')
+    const finish = str(p, 'finish', 'plaster')
+    const doorW = num(p, 'doorWidth')
+    const doorH = num(p, 'doorHeight')
+    const winW = num(p, 'winWidth')
+    const winH = num(p, 'winHeight')
+    const winSill = num(p, 'winSill')
+
+    const maxOffset = Math.max(0, width / 2 - doorW / 2 - t)
+    const doorX = Math.max(-maxOffset, Math.min(maxOffset, num(p, 'doorOffset') * (width / 2)))
+
+    const gid = `g${newId()}`
+    const cos = Math.cos(room.rotationY)
+    const sin = Math.sin(room.rotationY)
+    /** Room local offset into world space, honouring the room's own yaw. */
+    const place = (lx: number, lz: number): [number, number, number] => [
+      room.position[0] + lx * cos + lz * sin,
+      room.position[1],
+      room.position[2] - lx * sin + lz * cos,
+    ]
+
+    const parts: SceneObject[] = []
+    const push = (
+      type: ComponentType,
+      lx: number,
+      lz: number,
+      yaw: number,
+      params: Params,
+      name: string,
+    ) => {
+      parts.push({
+        ...makeObject(type, place(lx, lz), name),
+        rotationY: room.rotationY + yaw,
+        params: { ...defaultParams(type), ...params },
+        groupId: gid,
+        lowPoly: room.lowPoly,
+      })
+    }
+
+    push('wall', 0, depth / 2, 0, { length: width + t, height, thickness: t, finish }, 'Front wall')
+    push('wall', 0, -depth / 2, 0, { length: width + t, height, thickness: t, finish }, 'Back wall')
+    push('wall', -width / 2, 0, Math.PI / 2, { length: depth - t, height, thickness: t, finish }, 'Left wall')
+    push('wall', width / 2, 0, Math.PI / 2, { length: depth - t, height, thickness: t, finish }, 'Right wall')
+    push('door', doorX, depth / 2, 0, { width: doorW, height: doorH }, 'Door')
+    push('window', -width / 2, 0, Math.PI / 2, { width: winW, height: winH, sill: winSill }, 'Left window')
+    push('window', width / 2, 0, Math.PI / 2, { width: winW, height: winH, sill: winSill }, 'Right window')
+
+    if (bool(p, 'floor', true)) {
+      push('slab', 0, 0, 0, { width: width + t, depth: depth + t, thickness: 3 * 0.0254, finish: 'concrete' }, 'Floor')
+    }
+    if (bool(p, 'ceiling', false)) {
+      const ceiling = { ...makeObject('slab', place(0, 0), 'Ceiling'), groupId: gid }
+      ceiling.position[1] = room.position[1] + height
+      ceiling.params = { ...defaultParams('slab'), width: width + t, depth: depth + t }
+      ceiling.rotationY = room.rotationY
+      parts.push(ceiling)
+    }
+
+    s.pushHistory()
+    set((st) => ({
+      objects: [...st.objects.filter((o) => o.id !== id), ...parts],
+      selectedIds: parts.map((o) => o.id),
     }))
   },
 

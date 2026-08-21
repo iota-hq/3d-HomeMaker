@@ -117,8 +117,8 @@ export const CATALOG: Record<ComponentType, ComponentDef> = {
   },
 
   khaprail: {
-    type: 'khaprail', label: 'Khaprail Roof', category: 'Roof', icon: '🏚️', grounded: false,
-    blurb: 'Traditional pitched clay-tile roof. Interlocking khaprail tiles, instanced.',
+    type: 'khaprail', label: 'Clay Tile Roof', category: 'Roof', icon: '🏚️', grounded: false,
+    blurb: 'Pitched clay tile roof, the traditional khaprail. Tiles are instanced.',
     params: {
       span: { kind: 'length', label: 'Span', def: 16 * FT, min: 3 * FT, max: 80 * FT },
       length: { kind: 'length', label: 'Length', def: 20 * FT, min: 3 * FT, max: 120 * FT },
@@ -228,6 +228,28 @@ export const CATALOG: Record<ComponentType, ComponentDef> = {
       finish: { kind: 'enum', label: 'Wall finish', def: 'plaster', options: enumOpts(
         ['plaster', 'Plaster'], ['brick', 'Exposed brick'], ['concrete', 'Concrete'],
         ['stone', 'Stone'], ['paint', 'Painted'],
+      ) },
+    },
+  },
+
+  railing: {
+    type: 'railing', label: 'Railing', category: 'Access', icon: '🚧', grounded: true,
+    blurb: 'Free standing railing or balustrade. Straight, or bent around a curve.',
+    params: {
+      form: { kind: 'enum', label: 'Shape', def: 'straight', options: enumOpts(
+        ['straight', 'Straight'], ['curved', 'Curved'],
+      ) },
+      length: { kind: 'length', label: 'Length', def: 10 * FT, min: 1 * FT, max: 100 * FT },
+      sweep: { kind: 'angle', label: 'Curve sweep', def: 90, min: 10, max: 350 },
+      radius: { kind: 'length', label: 'Curve radius', def: 6 * FT, min: 1 * FT, max: 60 * FT },
+      height: { kind: 'length', label: 'Height', def: 3 * FT, min: 1 * FT, max: 8 * FT },
+      posts: { kind: 'count', label: 'Posts', def: 5, min: 2, max: 40 },
+      bars: { kind: 'count', label: 'Horizontal bars', def: 2, min: 0, max: 8 },
+      balusters: { kind: 'bool', label: 'Balusters', def: false },
+      topRail: { kind: 'length', label: 'Rail thickness', def: 2 * IN, min: 0.5 * IN, max: 6 * IN },
+      finish: { kind: 'enum', label: 'Finish', def: 'steel', options: enumOpts(
+        ['steel', 'Steel'], ['aluminium', 'Aluminium'], ['wood', 'Wood'],
+        ['teak', 'Dark teak'], ['glass', 'Glass infill'],
       ) },
     },
   },

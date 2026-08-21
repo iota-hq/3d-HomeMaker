@@ -14,7 +14,7 @@ function SceneList({ onPick }: { onPick: () => void }) {
   const toggleVisible = useSceneStore((s) => s.toggleVisible)
 
   return (
-    <div className="picker-list">
+    <div className="picker-list opening">
       {objects.map((o) => (
         <div
           key={o.id}
@@ -83,7 +83,9 @@ export function ScenePicker() {
           {name ?? 'Nothing selected'}
           {extra > 0 && ` +${extra}`}
         </span>
-        <Icon icon={I.chevron} size={15} />
+        <span className={`twist ${open ? "open" : ""}`}>
+          <Icon icon={I.chevron} size={15} />
+        </span>
       </button>
 
       {open && <SceneList onPick={() => setOpen(false)} />}

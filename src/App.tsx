@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CATALOG } from './core/catalog'
 import { FT, IN } from './core/units'
 import { exportView, type ImageFormat } from './store/io'
@@ -57,6 +57,66 @@ function LeftPanel() {
   )
 }
 
+/** Export sits behind one control: pick the format, then save. */
+function ExportMenu({
+  saving,
+  onSave,
+  format,
+  setFormat,
+}: {
+  saving: boolean
+  onSave: () => void
+  format: ImageFormat
+  setFormat: (f: ImageFormat) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const box = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const away = (e: MouseEvent) => {
+      if (box.current && !box.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', away)
+    return () => document.removeEventListener('mousedown', away)
+  }, [open])
+
+  const save = (f: ImageFormat) => {
+    setFormat(f)
+    setOpen(false)
+    // let the format land before the canvas is read back
+    setTimeout(onSave, 0)
+  }
+
+  return (
+    <div className="exportwrap" ref={box}>
+      <button
+        className="btn"
+        disabled={saving}
+        title="Save the current view as an image"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <Icon icon={I.exportImage} />
+        {saving ? 'Saving' : 'Export'}
+        <Icon icon={I.chevron} size={14} />
+      </button>
+
+      {open && (
+        <div className="dd-menu export-menu">
+          <button className={`dd-item ${format === 'png' ? 'on' : ''}`} onClick={() => save('png')}>
+            PNG
+            <span className="dd-note">lossless, larger</span>
+          </button>
+          <button className={`dd-item ${format === 'jpeg' ? 'on' : ''}`} onClick={() => save('jpeg')}>
+            JPG
+            <span className="dd-note">smaller, no transparency</span>
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 const SEEN_KEY = '3dspace.seen-about'
 const INTRO_MS = 5000
 
@@ -84,11 +144,11 @@ function Planner() {
   const undo = useSceneStore((s) => s.undo)
   const redo = useSceneStore((s) => s.redo)
   const canUndo = useSceneStore((s) => s.past.length > 0)
-  const canRedo = useSceneStore((s) => s.future.length > 0)
   const clear = useSceneStore((s) => s.clear)
   const lowPoly = useSceneStore((s) => s.lowPoly)
   const setGlobalLowPoly = useSceneStore((s) => s.setGlobalLowPoly)
   const [confirmReset, setConfirmReset] = useState(false)
+  const [showTools, setShowTools] = useState(false)
   const [showAbout, setShowAbout] = useState(() => {
     try {
       return localStorage.getItem(SEEN_KEY) !== '1'
@@ -200,8 +260,18 @@ function Planner() {
           </span>
         </button>
 
-        <div className="sep" />
+        <button
+          className={`btn icon ghost ${showTools ? 'on' : ''}`}
+          title={showTools ? 'Hide snap and units' : 'Show snap and units'}
+          aria-expanded={showTools}
+          onClick={() => setShowTools((v) => !v)}
+        >
+          <span className={`twist ${showTools ? 'open' : ''}`}>
+            <Icon icon={I.chevronRight} />
+          </span>
+        </button>
 
+        <div className={`toolset ${showTools ? 'open' : ''}`}>
         <div className="seg" title="Grid that dragging rounds to">
           <span className="seg-label">
             <Icon icon={I.snap} size={14} />
@@ -228,6 +298,7 @@ function Planner() {
             metric
           </button>
         </div>
+        </div>
 
         <div className="spacer" />
 
@@ -243,27 +314,13 @@ function Planner() {
         <button className="btn icon" title="Undo" disabled={!canUndo} onClick={undo}>
           <Icon icon={I.undo} />
         </button>
-        <button className="btn icon" title="Redo" disabled={!canRedo} onClick={redo}>
-          <Icon icon={I.redo} />
-        </button>
         <button className="btn icon" title="Clear the plot" onClick={() => setConfirmReset(true)}>
           <Icon icon={I.reset} />
         </button>
 
         <div className="sep" />
 
-        <div className="seg" title="Save the current view as an image">
-          <button onClick={() => setFormat('png')} className={format === 'png' ? 'on' : ''}>
-            PNG
-          </button>
-          <button onClick={() => setFormat('jpeg')} className={format === 'jpeg' ? 'on' : ''}>
-            JPG
-          </button>
-        </div>
-        <button className="btn" onClick={saveImage} disabled={saving} title="Save this view">
-          <Icon icon={I.exportImage} />
-          {saving ? 'Saving' : 'Export'}
-        </button>
+        <ExportMenu saving={saving} onSave={saveImage} format={format} setFormat={setFormat} />
 
         <div className="sep" />
 

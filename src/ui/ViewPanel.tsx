@@ -29,7 +29,9 @@ export function ViewPanel() {
 
   return (
     <div className="section">
-      <p className="section-title">View</p>
+      <p className="section-title">
+        <Icon icon={I.view} size={13} /> View
+      </p>
       <div className="views">
         {VIEWS.map((v) => {
           const pinned = lockedView === v.key

@@ -1,5 +1,6 @@
 import { BY_CATEGORY } from '../core/catalog'
 import { useSceneStore } from '../store/useSceneStore'
+import { CATEGORY_ICON, Icon } from './icons'
 
 export function CatalogPanel() {
   const add = useSceneStore((s) => s.add)
@@ -9,7 +10,9 @@ export function CatalogPanel() {
     <>
       {BY_CATEGORY.map(({ category, items }) => (
         <div key={category}>
-          <p className="cat-title">{category}</p>
+          <p className="cat-title">
+            <Icon icon={CATEGORY_ICON[category]} size={13} /> {category}
+          </p>
           <div className="cat-grid">
             {items.map((d) => {
               const taken = d.singleton === true && objects.some((o) => o.type === d.type)

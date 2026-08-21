@@ -47,8 +47,8 @@ model assets, and there is nothing to wait for on load.
 | Site | Ground (grass, plain, soil, sand, concrete), Path |
 | Structure | Wall, Room, Ceiling / RCC slab, Column |
 | Openings | Door, Window |
-| Roof | Khaprail (clay tile), Durashine (steel sheet) |
-| Access | Stairs (straight or curved), Ladder |
+| Roof | Clay tile (khaprail), Durashine (steel sheet) |
+| Access | Stairs (straight or curved), Ladder, Railing |
 | Furniture | Cupboard, Dining table, Bed, Mirror |
 
 You can place as many grounds as you like, so a plan can span more than one
@@ -59,7 +59,8 @@ than on top of it, so plots never overlap or fight over a click.
 and a window in each side wall, plus an optional floor and ceiling slab. Square
 or rectangular, and every part of it stays adjustable from its own controls.
 
-**Khaprail** roofs lay real interlocking clay pan tiles in courses.
+**Clay tile** roofs, the traditional khaprail, lay real interlocking pan tiles
+in courses.
 
 **Durashine** is the Tata BlueScope line, which is what is actually sold across
 South Asia, rather than BlueScope Australia's. The physical profiles overlap but
@@ -73,6 +74,9 @@ handrail up the helix, and every tread is the same box, equal width and equal
 going, rather than a wedge that widens towards the outside.
 
 **Paths** can be bent around an arc with the Curve control.
+
+**Rooms** can be split into their separate walls, door, windows and floor with
+"Split into parts", which leaves them grouped so they still move together.
 
 **Mirrors** use a low roughness metallic surface rather than a true reflection.
 A real mirror means rendering the whole scene a second time every frame, which
@@ -156,6 +160,13 @@ The scene is small but the interaction budget is tight, so:
   toolbar, not the dimension controls, not the scene list. Skipping this cost
   roughly 30ms per frame, because it meant rebuilding every icon SVG on screen.
 - The scene list only mounts while it is open.
+
+Rendering settles rather than shimmering, which took four things: the ground
+receives shadows but no longer casts them (a flat slab casting onto itself is
+what banded the grass), the grid is drawn against a polygon offset so it cannot
+z-fight the surface beneath it, the camera runs 0.5 to 400 rather than 0.1 to
+800 so depth precision is not spent entirely near the lens, and the shadow
+camera is sized to the scene instead of a fixed box.
 
 ## Layout
 

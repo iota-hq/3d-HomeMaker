@@ -32,12 +32,14 @@ export function Ground({ obj }: { obj: SceneObject }) {
 
   return (
     <group>
-      <mesh position={[0, -lip / 2, 0]} receiveShadow castShadow>
+      {/* The ground only receives shadows. Letting a big flat slab cast onto
+          itself is what produced the moire banding across the grass. */}
+      <mesh position={[0, -lip / 2, 0]} receiveShadow>
         <boxGeometry args={[width, lip, depth]} />
-        <Mat finish={surface} scale={Math.max(width, depth) * 0.5} />
+        <Mat finish={surface} scale={Math.max(width, depth) * 0.5} depthBias />
       </mesh>
       {gridLines && (
-        <lineSegments geometry={gridLines} position={[0, 0.004, 0]} renderOrder={1}>
+        <lineSegments geometry={gridLines} position={[0, 0.002, 0]} renderOrder={1}>
           <lineBasicMaterial color="#000000" transparent opacity={0.09} depthWrite={false} />
         </lineSegments>
       )}

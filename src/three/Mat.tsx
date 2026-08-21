@@ -20,10 +20,14 @@ export function Mat({
    * anything that is not square, otherwise brick and tile come out stretched.
    */
   scale = 2,
+  /** Pushes the surface a hair away from the camera in the depth buffer, so a
+   *  decal drawn on top of it (the ground grid) cannot z-fight with it. */
+  depthBias = false,
 }: {
   finish: string
   tint?: string
   scale?: number | [number, number]
+  depthBias?: boolean
 }) {
   const lowPoly = useContext(LowPolyContext)
   const m = mat(finish)
@@ -75,6 +79,9 @@ export function Mat({
       flatShading={!maps && (m.flat ?? false)}
       transparent={transparent}
       opacity={m.opacity ?? 1}
+      polygonOffset={depthBias}
+      polygonOffsetFactor={depthBias ? 1 : 0}
+      polygonOffsetUnits={depthBias ? 1 : 0}
     />
   )
 }

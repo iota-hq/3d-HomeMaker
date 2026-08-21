@@ -335,6 +335,7 @@ function InspectorBody({ id }: { id: string }) {
   const remove = useSceneStore((s) => s.remove)
   const toggleLock = useSceneStore((s) => s.toggleLock)
   const setLowPoly = useSceneStore((s) => s.setLowPoly)
+  const explodeRoom = useSceneStore((s) => s.explodeRoom)
   const groupSelected = useSceneStore((s) => s.groupSelected)
   const ungroupSelected = useSceneStore((s) => s.ungroupSelected)
 
@@ -346,7 +347,7 @@ function InspectorBody({ id }: { id: string }) {
     <>
       <div className="section">
         <p className="section-title">
-          <span>{def.icon}</span> {def.label}
+          <Icon icon={I.rename} size={13} /> Rename
         </p>
         <input
           className="name-input"
@@ -357,7 +358,9 @@ function InspectorBody({ id }: { id: string }) {
       </div>
 
       <div className="section">
-        <p className="section-title">Material</p>
+        <p className="section-title">
+          <Icon icon={I.texture} size={13} /> Material
+        </p>
         <ToggleRow label="Low poly" checked={lowPoly} onChange={(v) => setLowPoly(id, v)} />
         <p className="hint-note">
           {lowPoly
@@ -376,19 +379,33 @@ function InspectorBody({ id }: { id: string }) {
       </div>
 
       <div className="section">
-        <p className="section-title">Dimensions</p>
+        <p className="section-title">
+          <Icon icon={I.dimensions} size={13} /> Dimensions
+        </p>
         <ParamList id={id} type={type} params={params} units={units} lowPoly={lowPoly} />
       </div>
 
       <div className="section">
-        <p className="section-title">Position</p>
+        <p className="section-title">
+          <Icon icon={I.position} size={13} /> Position
+        </p>
         <Placement id={id} grounded={def.grounded} />
       </div>
 
       <div className="section">
         <p className="section-title">
-          <Icon icon={I.group} size={12} /> Grouping
+          <Icon icon={I.group} size={13} /> Grouping
         </p>
+        {type === 'room' && (
+          <button
+            className="btn wide"
+            style={{ marginBottom: 6 }}
+            onClick={() => explodeRoom(id)}
+            title="Split this room into separate walls, door and windows"
+          >
+            <Icon icon={I.ungroup} /> Split into parts
+          </button>
+        )}
         {canGroup || grouped ? (
           <div className="row">
             {canGroup && (
